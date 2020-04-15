@@ -1,0 +1,135 @@
+include header.pug
+mixin tree(course)
+  ul.list-group
+    each course_item in course
+      li(class='list-group-item')=course_item.label
+        if(course_item.type && course_item.vid != '')
+          span(class="badge badge-info")='有视频'
+          button(type="button" class="btn btn-primary btn-sm" data-id=course_item.id data-type="edit")='修改json'
+        else if(course_item.vid == '')
+          span(class="badge badge-danger")='vid为空'
+          button(type="button" class="btn btn-primary btn-sm" data-id=course_item.id data-type="edit")='修改json'
+        if course_item.children
+          +tree(course_item.children)
+
+div(class='container')
+ form(id="course-form" action="/updateCourse" method="post")
+  div(class='form-group')
+    label(for="course-id")='课程ID'
+    input(type="text" class="form-control" id="course-id" value=course.course_id name="course_id" readonly)
+  div(class='form-group')
+    label(for="course-name")='课程名称'
+    input(type="text" class="form-control" id="course-name" value=course.course_name name="course_name")
+  div(class='form-group')
+    label(for="course-material")='课程教材'
+    input(type="text" class="form-control" id="course-material" value=course.material_name name="material_name")
+  div(class='form-group')
+    label(for="course-brief")='课程简介'
+    input(type="text" class="form-control" id="course-brief" value=course.course_brief name="course_brief")
+  div(class='form-group')
+    label(for="course-video")='课程视频数'
+    input(type="text" class="form-control" id="course-video" value=course.norm_sum name="norm_sum" readonly)
+  div(class='form-group')
+    label(for="course-name")='课程封面'
+    input(type="text" class="form-control" id="course-name" value=course.name readonly placeholder="功能待完善")
+  div(class='form-group')
+    label(for="course-name")='课程目录树'
+    .row
+      .col
+       p=row
+       textarea(class="form-control" id="course-catalog" name="catalogtree" rows=10)=JSON.stringify(JSON.parse(course.catalogtree),null,2)
+      .col
+       +tree(JSON.parse(course.catalogtree).catalogtree)
+  button(type="submit" class="btn btn-primary mb-2" id="edit")='提交修改'
+include modal.pug
+script.
+  var row = 1
+  var data = JSON.parse(!{JSON.stringify(course.catalogtree)})
+  // console.log(data)
+  var destJSON = {}
+  var count = 0 //视频个数
+  function countRow(data){
+    for(let i=0;i<data.length;i++){
+      row++;
+      // console.log(data[i])
+      if(data[i].hasOwnProperty('children')){
+        // console.log("sdd")
+        countRow(data[i].children)
+      }
+      
+    }
+  }
+  $(function(){
+
+    // 修改json
+    $('button[data-type="edit"]').on('click',function(){
+      let id = $(this).data('id')
+      editJSON(data.catalogtree,id)
+      $('#modal').modal('show')
+      console.log(destJSON)
+    })
+    // modal
+    $('#modal').on('show.bs.modal', function (event) {
+      var modal = $(this)
+      modal.find('#modal-id').val(destJSON.id)
+      modal.find('#modal-vid').val(destJSON.vid)
+      modal.find('#finished').val(destJSON.finished)
+      modal.find('#type').attr('checked',destJSON.type)
+    })
+    // modal 
+     $('#modal-confirm').on('click', function (event) {
+      
+      id = $('#modal-id').val()
+      vid = $('#modal-vid').val()
+      finished = $('#finished').val()
+      type = $('#type')[0].checked
+      if(type && vid == ''){
+        alert('未添加vid信息或finished信息')
+        return
+      }
+      $('#modal').modal('hide')
+      console.log(type)
+      if(type){
+        destJSON.type = type
+        destJSON.vid = vid
+        destJSON.finished = finished
+      }else{
+        delete destJSON.vid
+        destJSON.type = type
+        delete destJSON.finished
+      }
+      console.log(data)
+      count = 0
+      countVideo(data.catalogtree)
+    //  alert(count)
+      $('#course-video').val(count)
+      $('#course-catalog').val(JSON.stringify(data,null,2))
+    })
+
+    $('#edit').on('click',function(){
+      $('#course-form').submit()
+    })
+  })
+  function editJSON(data,id){
+    for(let i=0;i<data.length;i++){
+      if(data[i].id === id) {
+        destJSON = data[i]
+        return true
+      }
+      if(data[i].hasOwnProperty('children')){
+         if(editJSON(data[i].children,id))return true
+      }
+    }
+    return false
+  }
+  function countVideo(catalog){
+    for(let i=0;i<catalog.length;i++){
+      if(catalog[i].vid!='' && catalog[i].type) {
+        count++
+      }
+      if(catalog[i].hasOwnProperty('children')){
+         countVideo(catalog[i]['children'])
+      }
+    }
+  }
+

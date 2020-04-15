@@ -1,0 +1,28 @@
+include header.pug
+div(class='container')
+  h3='课程查看'
+  ul(class='nav nav-tabs' role="tablist")
+    each val in [{label:'入库',status:'shifted'},{label:'未入库',status:'unshifted'}]
+     li( class="nav-item")
+      a(class='nav-link' data-toggle="tab" href='#'+val.status role="tab" aria-controls=val.status aria-selected="true")=val.label
+  div(class="tab-content" id="pills-tabContent")
+    div(class="tab-pane fade show active" id="shifted" role="tabpanel" aria-labelledby="shifted-tab")
+     div(class='row')
+      each course in courses_shifted
+        div(class='col-3')
+          div(class='card course-item')
+            img(src="/images/cover.jpeg" class="card-img-top" alt="...")
+            div(class="card-body")
+             h5(class="card-title text-truncate")=course.course_name
+             p(class="card-text course-name")='教材名：'+ course.material_name
+             a(href="/courseInfo/"+course.course_id  class="btn btn-primary")='去处理'
+    div(class="tab-pane fade show active" id="unshifted" role="tabpanel" aria-labelledby="unshifted-tab")
+     div(class='row')
+      each course in courses_unshifted
+        div(class='col-3')
+          div(class='card course-item')
+            img(src="/images/cover.jpeg" class="card-img-top" alt="...")
+            div(class="card-body")
+             h5(class="card-title course-name")=course.course_name
+             p(class="card-text course-name")='教材名：'+ course.material_name
+             a(href="/courseInfo/"+course.course_id class="btn btn-primary")='去处理'
